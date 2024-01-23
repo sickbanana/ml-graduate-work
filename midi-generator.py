@@ -1,9 +1,11 @@
 import collections
 import pathlib
+import pretty_midi
 import glob
 
 import numpy as np
 import tensorflow as tf
+import pandas as pd
 
 
 def midi_to_notes(midi_file: str) -> pd.DataFrame:
@@ -50,3 +52,4 @@ if __name__ == '__main__':
     key_order = ['pitch', 'step', 'duration']
     train_notes = np.stack([all_notes[key] for key in key_order], axis=1)
     X_train = tf.data.Dataset.from_tensor_slices(train_notes)
+    X_train.element_spec
