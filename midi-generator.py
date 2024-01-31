@@ -75,7 +75,7 @@ if __name__ == '__main__':
     filenames = glob.glob(str(data_dir / '**/*.mid*'))
     print('Number of files:', len(filenames))
 
-    num_files = 5
+    num_files = 50
     all_notes = []
     for f in filenames[:num_files]:
         notes = midi_to_notes(f)
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     learning_rate = 0.005
 
     inputs = tf.keras.Input(input_shape)
-    x = tf.keras.layers.SimpleRNN(128)(inputs)
+    x = tf.keras.layers.LSTM(128)(inputs)
 
     outputs = {
         'pitch': tf.keras.layers.Dense(128, name='pitch')(x),
@@ -157,7 +157,7 @@ if __name__ == '__main__':
             restore_best_weights=True),
     ]
 
-    epochs = 50
+    epochs = 30
     history = model.fit(
         X_train_seq,
         epochs=epochs,
