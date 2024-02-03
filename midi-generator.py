@@ -61,6 +61,24 @@ def create_sequences(
 
     return sequences.map(split_labels, num_parallel_calls=tf.data.AUTOTUNE)
 
+    def generate_midi(model, start_string, generation_length=100):
+        #input_eval = np.array([char_to_index[s] for s in start_string])
+        x = np.zeros((1, seq_length))
+        #x[0, -len(input_eval):] = input_eval[:]
+        text_generated = []
+
+        model.reset_states()
+        for i in range(generation_length):
+            predictions = model.predict(x)[0, -1]
+            predictions = predictions.astype(np.float64)
+            predictions = predictions / np.sum(predictions)
+            predicted_id = np.argmax(np.random.multinomial(1, predictions))
+            x[0, :-1] = x[0, 1:]
+            x[0, -1] = predicted_id
+            #text_generated.append([ind_to_char(predicted_id)])
+
+        return (start_string + ''.join(text_generated))
+
 
 if __name__ == '__main__':
     data_dir = pathlib.Path('data/maestro-v2.0.0')
@@ -75,7 +93,7 @@ if __name__ == '__main__':
     filenames = glob.glob(str(data_dir / '**/*.mid*'))
     print('Number of files:', len(filenames))
 
-    num_files = 50
+    num_files = 5
     all_notes = []
     for f in filenames[:num_files]:
         notes = midi_to_notes(f)
@@ -89,7 +107,7 @@ if __name__ == '__main__':
     X_train = tf.data.Dataset.from_tensor_slices(train_notes)
     print(X_train.element_spec)
 
-    seq_length = 25
+    seq_length = 50
     vocab_size = 128
     X_train_seq = create_sequences(X_train, seq_length, vocab_size)
     batch_size = 64
@@ -157,7 +175,7 @@ if __name__ == '__main__':
             restore_best_weights=True),
     ]
 
-    epochs = 30
+    epochs = 40
     history = model.fit(
         X_train_seq,
         epochs=epochs,
