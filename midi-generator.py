@@ -3,6 +3,9 @@ import pathlib
 import pretty_midi
 import glob
 import matplotlib
+
+import create_models
+
 matplotlib.use('TkAgg')
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -107,7 +110,7 @@ if __name__ == '__main__':
     X_train = tf.data.Dataset.from_tensor_slices(train_notes)
     print(X_train.element_spec)
 
-    seq_length = 50
+    seq_length = 60
     vocab_size = 128
     X_train_seq = create_sequences(X_train, seq_length, vocab_size)
     batch_size = 64
@@ -120,53 +123,11 @@ if __name__ == '__main__':
 
     print(X_train_seq.element_spec)
 
-    input_shape = (seq_length, 3)
-    learning_rate = 0.005
-
-    inputs = tf.keras.Input(input_shape)
-    x = tf.keras.layers.LSTM(128)(inputs)
-
-    outputs = {
-        'pitch': tf.keras.layers.Dense(128, name='pitch')(x),
-        'step': tf.keras.layers.Dense(1, name='step')(x),
-        'duration': tf.keras.layers.Dense(1, name='duration')(x),
-    }
-
-    model = tf.keras.Model(inputs, outputs)
-
-
-    def mse_with_positive_pressure(y_true: tf.Tensor, y_pred: tf.Tensor):
-        mse = (y_true - y_pred) ** 2
-        positive_pressure = 10 * tf.maximum(-y_pred, 0.0)
-        return tf.reduce_mean(mse + positive_pressure)
-
-
-    loss = {
-        'pitch': tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True),
-        'step': mse_with_positive_pressure,
-        'duration': mse_with_positive_pressure,
-    }
-
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-
-    model.compile(loss=loss, optimizer=optimizer)
-
-    model.summary()
-
-    model.compile(
-        loss=loss,
-        loss_weights={
-            'pitch': 0.05,
-            'step': 1.0,
-            'duration': 1.0,
-        },
-        optimizer=optimizer,
-    )
+    model = create_models.create_model_lstm_v1()
 
     callbacks = [
         tf.keras.callbacks.ModelCheckpoint(
-            filepath='./training_checkpoints/ckpt_{epoch}',
+            filepath='./training_checkpoints_test/cp.ckpt_{epoch}',
             save_weights_only=True),
         tf.keras.callbacks.EarlyStopping(
             monitor='loss',
@@ -175,12 +136,14 @@ if __name__ == '__main__':
             restore_best_weights=True),
     ]
 
-    epochs = 40
+    epochs = 20
     history = model.fit(
         X_train_seq,
         epochs=epochs,
         callbacks=callbacks,
     )
+
+    model.save('saved_models/lstm_v1')
 
     plt.plot(history.epoch, history.history['loss'], label='total loss')
     plt.show()
