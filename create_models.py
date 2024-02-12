@@ -1,9 +1,11 @@
 import tensorflow as tf
 from tensorflow import keras
 
+seq_length = 60
+vocab_size = 128
+
 
 def create_model_lstm_v1():
-    seq_length = 60
     input_shape = (seq_length, 3)
     learning_rate = 0.005
 

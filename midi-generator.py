@@ -96,7 +96,7 @@ if __name__ == '__main__':
     filenames = glob.glob(str(data_dir / '**/*.mid*'))
     print('Number of files:', len(filenames))
 
-    num_files = 5
+    num_files = 100
     all_notes = []
     for f in filenames[:num_files]:
         notes = midi_to_notes(f)
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     X_train = tf.data.Dataset.from_tensor_slices(train_notes)
     print(X_train.element_spec)
 
-    seq_length = 60
+    seq_length = create_models.seq_length
     vocab_size = 128
     X_train_seq = create_sequences(X_train, seq_length, vocab_size)
     batch_size = 64
@@ -136,7 +136,7 @@ if __name__ == '__main__':
             restore_best_weights=True),
     ]
 
-    epochs = 20
+    epochs = 50
     history = model.fit(
         X_train_seq,
         epochs=epochs,

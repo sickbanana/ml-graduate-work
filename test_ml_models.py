@@ -1,4 +1,5 @@
 import collections
+import random
 import pathlib
 import pretty_midi
 import glob
@@ -25,7 +26,7 @@ def midi_to_notes(midi_file: str) -> pd.DataFrame:
     sorted_notes = sorted(instrument.notes, key=lambda note: note.start)
     prev_start = sorted_notes[0].start
 
-    for i in range(50):
+    for i in range(create_models.seq_length):
         note = sorted_notes[i]
         start = note.start
         end = note.end
@@ -96,6 +97,52 @@ def notes_to_midi(
 
 
 if __name__ == '__main__':
-    print(os.listdir('training_checkpoints'))
+    data_dir = pathlib.Path('data/maestro-v2.0.0')
+    if not data_dir.exists():
+        tf.keras.utils.get_file(
+            'maestro-v2.0.0-midi.zip',
+            origin='https://storage.googleapis.com/magentadata/datasets/maestro/v2.0.0/maestro-v2.0.0-midi.zip',
+            extract=True,
+            cache_dir='.', cache_subdir='data',
+        )
+
+    filenames = glob.glob(str(data_dir / '**/*.mid*'))
+
+    rnd = random.randint(1, 100)
+
+    sample = filenames[-rnd]
+
+    seq_length_notes = midi_to_notes(sample)
 
     model = keras.models.load_model('saved_models/lstm_v1')
+
+    temperature = 2.0
+    num_predictions = 120
+    key_order = ['pitch', 'step', 'duration']
+    instrument = pretty_midi.PrettyMIDI(sample).instruments[0]
+    instrument_name = pretty_midi.program_to_instrument_name(instrument.program)
+
+    sample_notes = np.stack([seq_length_notes[key] for key in key_order], axis=1)
+
+    input_notes = (
+            sample_notes[:create_models.seq_length] / np.array([create_models.vocab_size, 1, 1]))
+
+    generated_notes = []
+    prev_start = 0
+    for _ in range(num_predictions):
+        pitch, step, duration = predict_next_note(input_notes, model, temperature)
+        start = prev_start + step
+        end = start + duration
+        input_note = (pitch, step, duration)
+        generated_notes.append((*input_note, start, end))
+        input_notes = np.delete(input_notes, 0, axis=0)
+        input_notes = np.append(input_notes, np.expand_dims(input_note, 0), axis=0)
+        prev_start = start
+
+    generated_notes = pd.DataFrame(
+        generated_notes, columns=(*key_order, 'start', 'end'))
+
+    out_file = 'generated_midi/lstm_v1_first.mid'
+    out_pm = notes_to_midi(
+        generated_notes, out_file=out_file, instrument_name=instrument_name)
+
