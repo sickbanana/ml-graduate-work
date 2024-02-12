@@ -117,7 +117,7 @@ if __name__ == '__main__':
     model = keras.models.load_model('saved_models/lstm_v1')
 
     temperature = 2.0
-    num_predictions = 120
+    num_predictions = 300
     key_order = ['pitch', 'step', 'duration']
     instrument = pretty_midi.PrettyMIDI(sample).instruments[0]
     instrument_name = pretty_midi.program_to_instrument_name(instrument.program)

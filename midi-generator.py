@@ -117,7 +117,7 @@ if __name__ == '__main__':
             restore_best_weights=True),
     ]
 
-    epochs = 50
+    epochs = 2
     history = model.fit(
         X_train_seq,
         epochs=epochs,
@@ -127,5 +127,5 @@ if __name__ == '__main__':
     model.save('saved_models/lstm_v1')
 
     plt.plot(history.epoch, history.history['loss'], label='total loss')
-    plt.show()
+    plt.savefig('saved_graphics/lstm_v1_' + str(epochs) + 'epochs.png')
 

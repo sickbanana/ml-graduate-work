@@ -10,10 +10,10 @@ def create_model_lstm_v1():
     learning_rate = 0.005
 
     inputs = tf.keras.Input(input_shape)
-    x = tf.keras.layers.LSTM(128)(inputs)
+    x = tf.keras.layers.LSTM(vocab_size)(inputs)
 
     outputs = {
-        'pitch': tf.keras.layers.Dense(128, name='pitch')(x),
+        'pitch': tf.keras.layers.Dense(vocab_size, name='pitch')(x),
         'step': tf.keras.layers.Dense(1, name='step')(x),
         'duration': tf.keras.layers.Dense(1, name='duration')(x),
     }
@@ -47,3 +47,10 @@ def create_model_lstm_v1():
     )
 
     return model
+
+
+def create_model_lstm_v2():
+
+
+    return
+
