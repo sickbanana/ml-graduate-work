@@ -70,7 +70,7 @@ def notes_to_midi(
   notes: pd.DataFrame,
   out_file: str,
   instrument_name: str,
-  velocity: int = 100,  # note loudness
+  velocity: int,
 ) -> pretty_midi.PrettyMIDI:
 
   pm = pretty_midi.PrettyMIDI()
@@ -144,5 +144,5 @@ if __name__ == '__main__':
 
     out_file = 'generated_midi/lstm_v1_first.mid'
     out_pm = notes_to_midi(
-        generated_notes, out_file=out_file, instrument_name=instrument_name)
+        generated_notes, out_file=out_file, instrument_name=instrument_name, velocity=80)
 
