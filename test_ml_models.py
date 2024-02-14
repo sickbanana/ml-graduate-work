@@ -15,8 +15,10 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 import pandas as pd
+from music21 import converter, chord, note
 
 from matplotlib import pyplot as plt
+
 
 def midi_to_notes(midi_file: str) -> pd.DataFrame:
     pm = pretty_midi.PrettyMIDI(midi_file)
@@ -117,7 +119,7 @@ if __name__ == '__main__':
     model = keras.models.load_model('saved_models/lstm_v1')
 
     temperature = 2.0
-    num_predictions = 300
+    num_predictions = 100
     key_order = ['pitch', 'step', 'duration']
     instrument = pretty_midi.PrettyMIDI(sample).instruments[0]
     instrument_name = pretty_midi.program_to_instrument_name(instrument.program)
@@ -144,5 +146,5 @@ if __name__ == '__main__':
 
     out_file = 'generated_midi/lstm_v1_first.mid'
     out_pm = notes_to_midi(
-        generated_notes, out_file=out_file, instrument_name=instrument_name, velocity=80)
+        generated_notes, out_file=out_file, instrument_name=instrument_name, velocity=100)
 

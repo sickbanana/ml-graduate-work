@@ -4,6 +4,9 @@ import glob
 import pretty_midi
 
 import matplotlib
+
+import create_models
+
 matplotlib.use('TkAgg')
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -12,8 +15,24 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 import numpy as np
 import tensorflow as tf
 import pandas as pd
+from music21 import converter, chord, note
 
 from matplotlib import pyplot as plt
+
+
+def load_dataset():
+    original_score_test = converter.parse('data\maestro-v2.0.0\\2006\MIDI-Unprocessed_01_R1_2006_01-09_ORIG_MID--AUDIO_01_R1_2006_02_Track02_wav.midi').chordify()
+    data_dir = pathlib.Path('data\maestro-v2.0.0\\2006')
+    file_list = glob.glob(str(data_dir / '*.mid*'))
+
+    notes = []
+    durations = []
+
+    for i, file in enumerate(file_list):
+        print(i + 1, "Parsing %s" % file)
+        original_score = converter.parse(file).chordify()
+
+    return file_list
 
 
 def midi_to_notes(midi_file: str) -> pd.DataFrame:
@@ -76,6 +95,9 @@ if __name__ == '__main__':
             cache_dir='.', cache_subdir='data',
         )
 
+    file = load_dataset()
+    file.show('text')
+
     filenames = glob.glob(str(data_dir / '**/*.mid*'))
     print('Number of files:', len(filenames))
 
@@ -109,56 +131,12 @@ if __name__ == '__main__':
     embedding_dim = 256 * 2
     rnn_units = 1024 * 2
 
-    inputs = tf.keras.Input(shape=(seq_length, 3))
-    x = tf.keras.layers.LSTM(128)(inputs)
-    outputs = {
-        'pitch': tf.keras.layers.Dense(vocab_size, name='pitch')(x),
-        'step': tf.keras.layers.Dense(1, name='step')(x),
-        'duration': tf.keras.layers.Dense(1, name='duration')(x),
-    }
-    model = tf.keras.Model(inputs, outputs)
-
-    loss = {
-        'pitch': tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True),
-        'step': tf.keras.losses.mean_squared_error,
-        'duration': tf.keras.losses.mean_squared_error,
-    }
-
-    learning_rate = 0.05
-
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-
-    model.compile(loss=loss, optimizer=optimizer)
-
-    model.summary()
-
-    model.compile(
-        loss=loss,
-        loss_weights={
-            'pitch': 0.05,
-            'step': 1.0,
-            'duration': 1.0,
-        },
-        optimizer=optimizer,
-    )
-
-    callbacks = [
-        tf.keras.callbacks.ModelCheckpoint(
-            filepath='./training_checkpoints_v2/ckpt_{epoch}',
-            save_weights_only=True),
-        tf.keras.callbacks.EarlyStopping(
-            monitor='loss',
-            patience=5,
-            verbose=1,
-            restore_best_weights=True),
-    ]
+    model = create_models.create_model_lstm_v2()
 
     epochs = 30
     history = model.fit(
         X_train_seq,
         epochs=epochs,
-        callbacks=callbacks,
     )
 
     plt.plot(history.epoch, history.history['loss'], label='total loss')

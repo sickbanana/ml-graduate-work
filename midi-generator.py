@@ -77,7 +77,7 @@ if __name__ == '__main__':
     filenames = glob.glob(str(data_dir / '**/*.mid*'))
     print('Number of files:', len(filenames))
 
-    num_files = 5
+    num_files = 15
     all_notes = []
     for f in filenames[:num_files]:
         notes = midi_to_notes(f)
@@ -117,7 +117,7 @@ if __name__ == '__main__':
             restore_best_weights=True),
     ]
 
-    epochs = 2
+    epochs = 20
     history = model.fit(
         X_train_seq,
         epochs=epochs,
